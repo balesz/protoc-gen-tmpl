@@ -8,16 +8,18 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/balesz/protoc-gen-tmpl/data"
+	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func New(data *data.Data) *Functions {
-	return &Functions{data: data}
+	return &Functions{data: data, store: make(map[string]interface{})}
 }
 
 type Functions struct {
 	data    *data.Data
 	funcMap template.FuncMap
+	store   map[string]interface{}
 }
 
 func (it *Functions) Map() template.FuncMap {
@@ -25,10 +27,24 @@ func (it *Functions) Map() template.FuncMap {
 		return it.funcMap
 	}
 	it.funcMap = template.FuncMap{
-		"Nil":                  it.nilFunc,
-		"Exit":                 it.exitFunc,
-		"Fail":                 it.failFunc,
-		"ToList":               it.toListFunc,
+		"Nil":    it.nilFunc,
+		"Exit":   it.exitFunc,
+		"Fail":   it.failFunc,
+		"ToList": it.toListFunc,
+
+		"Set": it.setFunc,
+		"Get": it.getFunc,
+
+		"ToCamel":              strcase.ToCamel,
+		"ToDelimited":          strcase.ToDelimited,
+		"ToKebab":              strcase.ToKebab,
+		"ToLowerCamel":         strcase.ToLowerCamel,
+		"ToScreamingDelimited": strcase.ToScreamingDelimited,
+		"ToScreamingKebab":     strcase.ToScreamingKebab,
+		"ToScreamingSnake":     strcase.ToScreamingSnake,
+		"ToSnake":              strcase.ToSnake,
+		"ToSnakeWithIgnore":    strcase.ToSnakeWithIgnore,
+
 		"FindDescriptorByName": it.findDescriptorByNameFunc,
 		"FindEnumByName":       it.findEnumByNameFunc,
 		"FindMessageByName":    it.findMessageByNameFunc,
@@ -59,6 +75,10 @@ func (it *Functions) LookupFail(err error) (string, bool) {
 	return "", false
 }
 
+func (it *Functions) ResetStore() {
+	it.store = make(map[string]interface{})
+}
+
 func (it *Functions) nilFunc() interface{} {
 	return nil
 }
@@ -83,6 +103,17 @@ func (it *Functions) toListFunc(list interface{}) []interface{} {
 		value := getFunc.Call([]reflect.Value{reflect.ValueOf(i)})[0]
 		result = append(result, value.Interface())
 	}
+	return result
+}
+
+func (it *Functions) setFunc(key string, val interface{}) interface{} {
+	it.store[key] = val
+	return ""
+}
+
+func (it *Functions) getFunc(key string) interface{} {
+	result := it.store[key]
+	delete(it.store, key)
 	return result
 }
 
