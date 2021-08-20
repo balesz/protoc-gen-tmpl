@@ -1,0 +1,48 @@
+{{- $file := first .Files}}
+{{- range .Files}}
+	{{- if hasSuffix "testing.proto" .Path}}
+		{{- $file = .}}
+	{{- end}}
+{{- end}}
+
+{{- if hasSuffix "testing.proto" $file.Path | not}}
+	{{- exit "testing.proto not exists"}}
+{{- end}}
+
+{{- range until $file.Messages.Len}}
+	{{- $message := $file.Messages.Get .}}
+  {{- nindent 0 ""}}class {{$message.Name}} {
+  {{- range until $message.Fields.Len}}
+		{{- $field := $message.Fields.Get .}}
+    {{- nindent 2 ""}}{{template "dartType" $field}} _{{$field.Name}};
+  {{- end}}
+  {{- nindent 0 ""}}}
+{{- end -}}
+
+{{- define "dartType"}}
+	{{- $type := ""}}
+	{{- if .Kind | toString | eq "bool"}}{{- $type = "bool"}}
+	{{- else if .Kind | toString | eq "int32"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "sint32"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "uint32"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "int64"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "sint64"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "uint64"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "sfixed32"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "fixed32"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "float"}}{{- $type = "double"}}
+	{{- else if .Kind | toString | eq "sfixed64"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "fixed64"}}{{- $type = "int"}}
+	{{- else if .Kind | toString | eq "double"}}{{- $type = "double"}}
+	{{- else if .Kind | toString | eq "string"}}{{- $type = "String"}}
+	{{- else if .Kind | toString | eq "bytes"}}{{- $type = "List<int>"}}
+	{{- else if .Kind | toString | eq "enum"}}{{- $type = .Enum.Name | toString | camelcase}}
+	{{- else if .Kind | toString | eq "message"}}{{- $type = .Message.Name | toString | camelcase}}
+	{{- else if .Kind | toString | eq "group"}}{{- $type = .Message.Name | toString | camelcase}}
+  {{- end -}}
+	{{- if .IsMap}}Map<{{template "dartType" .MapKey}}, {{template "dartType" .MapValue}}>
+	{{- else if .IsList}}List<{{$type}}>
+	{{- else}}{{$type}}
+	{{- if .HasOptionalKeyword}}?{{end}}
+	{{- end -}}
+{{- end -}}

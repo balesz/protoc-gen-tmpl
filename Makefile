@@ -23,7 +23,7 @@ remux.dart: $(BIN_NAME) $(INPUT_DIR)/remux.proto
 	rm -rf $(OUTPUT_DIR); mkdir $(OUTPUT_DIR)
 	protoc -I=$(INPUT_DIR) \
 	--plugin=$(BIN_NAME)=bin/$(BIN_NAME) \
-	--tmpl_out=$(OUTPUT_DIR) --tmpl_opt=test/template \
+	--tmpl_out=$(OUTPUT_DIR) --tmpl_opt=test \
 	$(GOOGLE_PROTO_FILES) \
 	$(PROTO_FILES)
 
