@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/balesz/protoc-gen-tmpl/generator"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -17,8 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	generator := NewGenerator(&req)
-	response := generator.Execute()
+	response := generator.New(&req).Execute()
 
 	if out, err := proto.Marshal(response); err != nil {
 		log.Fatal(err)
