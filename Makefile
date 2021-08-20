@@ -15,6 +15,10 @@ descriptor.out: $(INPUT_DIR)/remux.proto
 	$(GOOGLE_PROTO_FILES) \
 	$(PROTO_FILES)
 
+protoc-gen-tmpl: main.go
+	rm bin/$(BIN_NAME) || true
+	go build -o bin/$(BIN_NAME) .
+
 remux.dart: $(BIN_NAME) $(INPUT_DIR)/remux.proto 
 	rm -rf $(OUTPUT_DIR); mkdir $(OUTPUT_DIR)
 	protoc -I=$(INPUT_DIR) \
@@ -23,8 +27,5 @@ remux.dart: $(BIN_NAME) $(INPUT_DIR)/remux.proto
 	$(GOOGLE_PROTO_FILES) \
 	$(PROTO_FILES)
 
-$(BIN_NAME): main.go
-	rm bin/$(BIN_NAME) || true
-	go build -o bin/$(BIN_NAME) .
 
-.PHONY: clean descriptor.out remux.dart $(BIN_NAME)
+.PHONY: clean descriptor.out protoc-gen-tmpl remux.dart $(BIN_NAME)
