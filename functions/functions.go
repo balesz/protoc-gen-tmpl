@@ -113,7 +113,6 @@ func (it *Functions) setFunc(key string, val interface{}) interface{} {
 
 func (it *Functions) getFunc(key string) interface{} {
 	result := it.store[key]
-	delete(it.store, key)
 	return result
 }
 
