@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	rxEnum    = regexp.MustCompile(`.*\{\{.* \.Enum.*\}\}.*`)
-	rxFile    = regexp.MustCompile(`.*\{\{.* \.File.*\}\}.*`)
-	rxMessage = regexp.MustCompile(`.*\{\{.* \.Message.*\}\}.*`)
-	rxService = regexp.MustCompile(`.*\{\{.* \.Service.*\}\}.*`)
+	rxEnum    = regexp.MustCompile(`.*\{\{.*\.Enum.*\}\}.*`)
+	rxFile    = regexp.MustCompile(`.*\{\{.*\.File.*\}\}.*`)
+	rxMessage = regexp.MustCompile(`.*\{\{.*\.Message.*\}\}.*`)
+	rxService = regexp.MustCompile(`.*\{\{.*\.Service.*\}\}.*`)
 )
 
 func New(request *pluginpb.CodeGeneratorRequest) *generator {
@@ -62,10 +62,10 @@ func (it *generator) Execute() *pluginpb.CodeGeneratorResponse {
 }
 
 func (gen *generator) executeStaticTemplates() ([]*pluginpb.CodeGeneratorResponse_File, error) {
-	var templateFiles []string
-	for _, el := range gen.data.GetTemplateFiles() {
-		if !strings.Contains(el, "{{") && !strings.Contains(el, "}}") {
-			templateFiles = append(templateFiles, el)
+	templateFiles := make(map[string]string)
+	for tmpl, out := range gen.data.GetTemplateFiles() {
+		if !strings.Contains(out, "{{") && !strings.Contains(out, "}}") {
+			templateFiles[tmpl] = out
 		}
 	}
 	data := map[string]interface{}{"Files": gen.data.Files()}
@@ -73,16 +73,28 @@ func (gen *generator) executeStaticTemplates() ([]*pluginpb.CodeGeneratorRespons
 }
 
 func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorResponse_File, error) {
-	templateFiles := make(map[string][]string)
-	for _, it := range gen.data.GetTemplateFiles() {
-		if rxEnum.MatchString(it) {
-			templateFiles["enum"] = append(templateFiles["enum"], it)
-		} else if rxMessage.MatchString(it) {
-			templateFiles["message"] = append(templateFiles["message"], it)
-		} else if rxService.MatchString(it) {
-			templateFiles["service"] = append(templateFiles["service"], it)
-		} else if rxFile.MatchString(it) {
-			templateFiles["file"] = append(templateFiles["file"], it)
+	templateFiles := make(map[string]map[string]string)
+	for tmpl, out := range gen.data.GetTemplateFiles() {
+		if rxEnum.MatchString(out) {
+			if templateFiles["enum"] == nil {
+				templateFiles["enum"] = make(map[string]string)
+			}
+			templateFiles["enum"][tmpl] = out
+		} else if rxMessage.MatchString(out) {
+			if templateFiles["message"] == nil {
+				templateFiles["message"] = make(map[string]string)
+			}
+			templateFiles["message"][tmpl] = out
+		} else if rxService.MatchString(out) {
+			if templateFiles["service"] == nil {
+				templateFiles["service"] = make(map[string]string)
+			}
+			templateFiles["service"][tmpl] = out
+		} else if rxFile.MatchString(out) {
+			if templateFiles["file"] == nil {
+				templateFiles["file"] = make(map[string]string)
+			}
+			templateFiles["file"][tmpl] = out
 		}
 	}
 
@@ -132,9 +144,9 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 	return output, nil
 }
 
-func (gen *generator) generate(files []string, data map[string]interface{}) ([]*pluginpb.CodeGeneratorResponse_File, error) {
+func (gen *generator) generate(files map[string]string, data map[string]interface{}) ([]*pluginpb.CodeGeneratorResponse_File, error) {
 	var output []*pluginpb.CodeGeneratorResponse_File
-	for _, templateFile := range files {
+	for templateFile, outputFile := range files {
 		templateStr, err := readFile(templateFile)
 		if err != nil {
 			log.Printf("[%v] %v", templateFile, err)
@@ -161,20 +173,17 @@ func (gen *generator) generate(files []string, data map[string]interface{}) ([]*
 			content = buf.String()
 		}
 
-		fileName := strings.TrimSuffix(
-			strings.TrimPrefix(templateFile, gen.data.TemplateDir()+"/"), ".tmpl")
-
 		buf.Reset()
-		if tmpl, err := template.New(fileName).Funcs(gen.functions.Map()).Parse(fileName); err != nil {
+		if tmpl, err := template.New(outputFile).Funcs(gen.functions.Map()).Parse(outputFile); err != nil {
 			return nil, err
 		} else if err = tmpl.Execute(buf, data); err != nil {
 			return nil, err
 		} else {
-			fileName = buf.String()
+			outputFile = buf.String()
 		}
 
 		output = append(output, &pluginpb.CodeGeneratorResponse_File{
-			Name:    proto.String(fileName),
+			Name:    proto.String(outputFile),
 			Content: proto.String(content),
 		})
 	}

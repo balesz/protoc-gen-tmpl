@@ -18,12 +18,14 @@ func New(request *pluginpb.CodeGeneratorRequest) *Data {
 	if err != nil {
 		panic(err)
 	}
-	return &Data{request, registry}
+	cfg, _ := InitConfig(request.GetParameter())
+	return &Data{request, registry, cfg}
 }
 
 type Data struct {
 	request  *pluginpb.CodeGeneratorRequest
 	registry *protoregistry.Files
+	config   *Config
 }
 
 func (it *Data) Request() *pluginpb.CodeGeneratorRequest {
@@ -61,18 +63,24 @@ func (it *Data) TemplateDir() string {
 	}
 }
 
-func (it *Data) GetTemplateFiles() []string {
-	var result []string
+func (it *Data) GetTemplateFiles() map[string]string {
+	result := make(map[string]string)
 	filepath.Walk(it.TemplateDir(), func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("%v", err)
 		} else if info.IsDir() {
 			return nil
 		} else if !strings.HasSuffix(info.Name(), ".tmpl") {
-			log.Printf("invalid template file: %v", path)
-		} else {
-			result = append(result, path)
+			return nil
+		} else if it.config.IsExcluded(path) {
+			return nil
 		}
+		if out := it.config.OutputByName(path); out == "" {
+			result[path] = strings.Join(strings.Split(path, "/")[1:], "/")
+		} else {
+			result[path] = out
+		}
+		result[path] = strings.TrimSuffix(result[path], ".tmpl")
 		return nil
 	})
 	return result
