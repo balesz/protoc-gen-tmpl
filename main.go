@@ -19,7 +19,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	response := generator.New(&req).Execute()
+	var response *pluginpb.CodeGeneratorResponse
+	if files, err := generator.New(&req).Execute(); err != nil {
+		response = &pluginpb.CodeGeneratorResponse{
+			Error: proto.String(err.Error()),
+		}
+	} else {
+		response = &pluginpb.CodeGeneratorResponse{
+			File:              files,
+			SupportedFeatures: proto.Uint64(uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)),
+		}
+	}
 
 	if out, err := proto.Marshal(response); err != nil {
 		log.Fatal(err)

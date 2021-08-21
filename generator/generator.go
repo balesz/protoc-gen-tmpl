@@ -35,66 +35,58 @@ type generator struct {
 	functions *functions.Functions
 }
 
-func (it *generator) Execute() *pluginpb.CodeGeneratorResponse {
-	templateFiles := it.data.GetTemplateFiles()
+func (it *generator) Execute() ([]*pluginpb.CodeGeneratorResponse_File, error) {
+	templateFiles := it.data.TemplateFiles()
 	if len(templateFiles) == 0 {
-		return responseError(fmt.Errorf("no template file exists"))
+		return nil, fmt.Errorf("no template file exists")
 	}
 
 	var output []*pluginpb.CodeGeneratorResponse_File
 
 	if out, err := it.executeStaticTemplates(); err != nil {
-		return responseError(err)
+		return nil, err
 	} else if len(out) > 0 {
 		output = append(output, out...)
 	}
 
 	if out, err := it.executeDynamicTemplates(); err != nil {
-		return responseError(err)
+		return nil, err
 	} else if len(out) > 0 {
 		output = append(output, out...)
 	}
 
-	return &pluginpb.CodeGeneratorResponse{
-		File:              output,
-		SupportedFeatures: proto.Uint64(uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)),
-	}
+	return output, nil
 }
 
 func (gen *generator) executeStaticTemplates() ([]*pluginpb.CodeGeneratorResponse_File, error) {
 	templateFiles := make(map[string]string)
-	for tmpl, out := range gen.data.GetTemplateFiles() {
+	for tmpl, out := range gen.data.TemplateFiles() {
 		if !strings.Contains(out, "{{") && !strings.Contains(out, "}}") {
 			templateFiles[tmpl] = out
 		}
 	}
 	data := map[string]interface{}{"Files": gen.data.Files()}
-	return gen.generate(templateFiles, data)
+	return gen.execute(templateFiles, data)
 }
 
 func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorResponse_File, error) {
-	templateFiles := make(map[string]map[string]string)
-	for tmpl, out := range gen.data.GetTemplateFiles() {
+	type stringDic = map[string]string
+	templateFiles := struct {
+		Enum    stringDic
+		Message stringDic
+		Service stringDic
+		File    stringDic
+	}{make(stringDic), make(stringDic), make(stringDic), make(stringDic)}
+
+	for tmpl, out := range gen.data.TemplateFiles() {
 		if rxEnum.MatchString(out) {
-			if templateFiles["enum"] == nil {
-				templateFiles["enum"] = make(map[string]string)
-			}
-			templateFiles["enum"][tmpl] = out
+			templateFiles.Enum[tmpl] = out
 		} else if rxMessage.MatchString(out) {
-			if templateFiles["message"] == nil {
-				templateFiles["message"] = make(map[string]string)
-			}
-			templateFiles["message"][tmpl] = out
+			templateFiles.Message[tmpl] = out
 		} else if rxService.MatchString(out) {
-			if templateFiles["service"] == nil {
-				templateFiles["service"] = make(map[string]string)
-			}
-			templateFiles["service"][tmpl] = out
+			templateFiles.Service[tmpl] = out
 		} else if rxFile.MatchString(out) {
-			if templateFiles["file"] == nil {
-				templateFiles["file"] = make(map[string]string)
-			}
-			templateFiles["file"][tmpl] = out
+			templateFiles.File[tmpl] = out
 		}
 	}
 
@@ -108,7 +100,7 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 	var output []*pluginpb.CodeGeneratorResponse_File
 	for _, file := range files {
 		data["File"] = file
-		if out, err := gen.generate(templateFiles["file"], data); err != nil {
+		if out, err := gen.execute(templateFiles.File, data); err != nil {
 			return nil, err
 		} else {
 			output = append(output, out...)
@@ -116,7 +108,7 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 
 		for i := 0; i < file.Services().Len(); i++ {
 			data["Service"] = file.Services().Get(i)
-			if out, err := gen.generate(templateFiles["service"], data); err != nil {
+			if out, err := gen.execute(templateFiles.Service, data); err != nil {
 				return nil, err
 			} else {
 				output = append(output, out...)
@@ -125,7 +117,7 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 
 		for i := 0; i < file.Messages().Len(); i++ {
 			data["Message"] = file.Messages().Get(i)
-			if out, err := gen.generate(templateFiles["message"], data); err != nil {
+			if out, err := gen.execute(templateFiles.Message, data); err != nil {
 				return nil, err
 			} else {
 				output = append(output, out...)
@@ -134,7 +126,7 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 
 		for i := 0; i < file.Enums().Len(); i++ {
 			data["Enum"] = file.Enums().Get(i)
-			if out, err := gen.generate(templateFiles["enum"], data); err != nil {
+			if out, err := gen.execute(templateFiles.Enum, data); err != nil {
 				return nil, err
 			} else {
 				output = append(output, out...)
@@ -144,7 +136,7 @@ func (gen *generator) executeDynamicTemplates() ([]*pluginpb.CodeGeneratorRespon
 	return output, nil
 }
 
-func (gen *generator) generate(files map[string]string, data map[string]interface{}) ([]*pluginpb.CodeGeneratorResponse_File, error) {
+func (gen *generator) execute(files map[string]string, data map[string]interface{}) ([]*pluginpb.CodeGeneratorResponse_File, error) {
 	var output []*pluginpb.CodeGeneratorResponse_File
 	for templateFile, outputFile := range files {
 		templateStr, err := readFile(templateFile)
@@ -200,8 +192,4 @@ func readFile(path string) (string, error) {
 		return "", errors.New("file is empty")
 	}
 	return content, nil
-}
-
-func responseError(err error) *pluginpb.CodeGeneratorResponse {
-	return &pluginpb.CodeGeneratorResponse{Error: proto.String(err.Error())}
 }

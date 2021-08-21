@@ -19,13 +19,15 @@ func New(request *pluginpb.CodeGeneratorRequest) *Data {
 		panic(err)
 	}
 	cfg, _ := InitConfig(request.GetParameter())
-	return &Data{request, registry, cfg}
+	return &Data{request: request, registry: registry, config: cfg}
 }
 
 type Data struct {
-	request  *pluginpb.CodeGeneratorRequest
-	registry *protoregistry.Files
-	config   *Config
+	request       *pluginpb.CodeGeneratorRequest
+	registry      *protoregistry.Files
+	config        *Config
+	protoFiles    []protoreflect.FileDescriptor
+	templateFiles map[string]string
 }
 
 func (it *Data) Request() *pluginpb.CodeGeneratorRequest {
@@ -37,22 +39,14 @@ func (it *Data) Registry() *protoregistry.Files {
 }
 
 func (it *Data) Files() []protoreflect.FileDescriptor {
-	var files []protoreflect.FileDescriptor
+	if len(it.protoFiles) != 0 {
+		return it.protoFiles
+	}
 	it.registry.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		files = append(files, fd)
+		it.protoFiles = append(it.protoFiles, fd)
 		return true
 	})
-	return files
-}
-
-func (it *Data) FindDescriptorByName(name string) protoreflect.Descriptor {
-	result, _ := it.registry.FindDescriptorByName(protoreflect.FullName(name))
-	return result
-}
-
-func (it *Data) FindFileByPath(path string) protoreflect.FileDescriptor {
-	result, _ := it.registry.FindFileByPath(path)
-	return result
+	return it.protoFiles
 }
 
 func (it *Data) TemplateDir() string {
@@ -63,8 +57,11 @@ func (it *Data) TemplateDir() string {
 	}
 }
 
-func (it *Data) GetTemplateFiles() map[string]string {
-	result := make(map[string]string)
+func (it *Data) TemplateFiles() map[string]string {
+	if it.templateFiles != nil {
+		return it.templateFiles
+	}
+	it.templateFiles = make(map[string]string)
 	filepath.Walk(it.TemplateDir(), func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("%v", err)
@@ -73,15 +70,16 @@ func (it *Data) GetTemplateFiles() map[string]string {
 		} else if !strings.HasSuffix(info.Name(), ".tmpl") {
 			return nil
 		} else if it.config.IsExcluded(path) {
+			log.Printf("template file excluded: %v", path)
 			return nil
 		}
 		if out := it.config.OutputByName(path); out == "" {
-			result[path] = strings.Join(strings.Split(path, "/")[1:], "/")
+			it.templateFiles[path] = strings.Join(strings.Split(path, "/")[1:], "/")
 		} else {
-			result[path] = out
+			it.templateFiles[path] = out
 		}
-		result[path] = strings.TrimSuffix(result[path], ".tmpl")
+		it.templateFiles[path] = strings.TrimSuffix(it.templateFiles[path], ".tmpl")
 		return nil
 	})
-	return result
+	return it.templateFiles
 }

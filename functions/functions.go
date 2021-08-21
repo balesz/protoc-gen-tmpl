@@ -45,11 +45,11 @@ func (it *Functions) Map() template.FuncMap {
 		"ToSnake":              strcase.ToSnake,
 		"ToSnakeWithIgnore":    strcase.ToSnakeWithIgnore,
 
-		"FindDescriptorByName": it.findDescriptorByNameFunc,
-		"FindEnumByName":       it.findEnumByNameFunc,
-		"FindMessageByName":    it.findMessageByNameFunc,
 		"FindFileByPath":       it.findFileByPathFunc,
+		"FindDescriptorByName": it.findDescriptorByNameFunc,
 		"FindServiceByName":    it.findServiceByNameFunc,
+		"FindMessageByName":    it.findMessageByNameFunc,
+		"FindEnumByName":       it.findEnumByNameFunc,
 	}
 	for k, v := range sprig.TxtFuncMap() {
 		it.funcMap[k] = v
@@ -116,32 +116,34 @@ func (it *Functions) getFunc(key string) interface{} {
 	return result
 }
 
-func (it *Functions) findDescriptorByNameFunc(name string) protoreflect.Descriptor {
-	return it.data.FindDescriptorByName(name)
-}
-
-func (it *Functions) findEnumByNameFunc(name string) protoreflect.EnumDescriptor {
-	if result, ok := it.data.FindDescriptorByName(name).(protoreflect.EnumDescriptor); ok {
-		return result
-	} else {
-		return nil
-	}
-}
-
 func (it *Functions) findFileByPathFunc(path string) protoreflect.FileDescriptor {
-	return it.data.FindFileByPath(path)
+	result, _ := it.data.Registry().FindFileByPath(path)
+	return result
 }
 
-func (it *Functions) findMessageByNameFunc(name string) protoreflect.MessageDescriptor {
-	if result, ok := it.data.FindDescriptorByName(name).(protoreflect.MessageDescriptor); ok {
-		return result
-	} else {
-		return nil
-	}
+func (it *Functions) findDescriptorByNameFunc(name string) protoreflect.Descriptor {
+	result, _ := it.data.Registry().FindDescriptorByName(protoreflect.FullName(name))
+	return result
 }
 
 func (it *Functions) findServiceByNameFunc(name string) protoreflect.ServiceDescriptor {
-	if result, ok := it.data.FindDescriptorByName(name).(protoreflect.ServiceDescriptor); ok {
+	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.ServiceDescriptor); ok {
+		return result
+	} else {
+		return nil
+	}
+}
+
+func (it *Functions) findMessageByNameFunc(name string) protoreflect.MessageDescriptor {
+	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.MessageDescriptor); ok {
+		return result
+	} else {
+		return nil
+	}
+}
+
+func (it *Functions) findEnumByNameFunc(name string) protoreflect.EnumDescriptor {
+	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.EnumDescriptor); ok {
 		return result
 	} else {
 		return nil

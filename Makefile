@@ -27,5 +27,4 @@ remux.dart: $(BIN_NAME) $(INPUT_DIR)/remux.proto
 	$(GOOGLE_PROTO_FILES) \
 	$(PROTO_FILES)
 
-
 .PHONY: clean descriptor.out protoc-gen-tmpl remux.dart $(BIN_NAME)
