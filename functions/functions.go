@@ -50,6 +50,10 @@ func (it *Functions) Map() template.FuncMap {
 		"FindServiceByName":    it.findServiceByNameFunc,
 		"FindMessageByName":    it.findMessageByNameFunc,
 		"FindEnumByName":       it.findEnumByNameFunc,
+
+		"LeadingComments":         it.leadingCommentsFunc,
+		"LeadingDetachedComments": it.leadingDetachedCommentsFunc,
+		"TrailingComments":        it.trailingCommentsFunc,
 	}
 	for k, v := range sprig.TxtFuncMap() {
 		it.funcMap[k] = v
@@ -148,4 +152,19 @@ func (it *Functions) findEnumByNameFunc(name string) protoreflect.EnumDescriptor
 	} else {
 		return nil
 	}
+}
+
+func (it *Functions) leadingCommentsFunc(desc protoreflect.Descriptor) string {
+	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
+	return srcLoc.LeadingComments
+}
+
+func (it *Functions) leadingDetachedCommentsFunc(desc protoreflect.Descriptor) []string {
+	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
+	return srcLoc.LeadingDetachedComments
+}
+
+func (it *Functions) trailingCommentsFunc(desc protoreflect.Descriptor) string {
+	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
+	return srcLoc.TrailingComments
 }
