@@ -1,15 +1,12 @@
 package functions
 
 import (
-	"errors"
-	"reflect"
 	"regexp"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/balesz/protoc-gen-tmpl/data"
 	"github.com/iancoleman/strcase"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func New(data *data.Data) *Functions {
@@ -81,90 +78,4 @@ func (it *Functions) LookupFail(err error) (string, bool) {
 
 func (it *Functions) ResetStore() {
 	it.store = make(map[string]interface{})
-}
-
-func (it *Functions) nilFunc() interface{} {
-	return nil
-}
-
-func (it *Functions) exitFunc(message string) (string, error) {
-	return "", errors.New(message)
-}
-
-func (it *Functions) failFunc(message string) (string, error) {
-	return "", errors.New(message)
-}
-
-func (it *Functions) toListFunc(list interface{}) []interface{} {
-	var result []interface{}
-	lenFunc := reflect.ValueOf(list).MethodByName("Len")
-	getFunc := reflect.ValueOf(list).MethodByName("Get")
-	if lenFunc.IsZero() || getFunc.IsZero() {
-		return result
-	}
-	length := lenFunc.Call([]reflect.Value{})[0]
-	for i := 0; i < int(length.Int()); i++ {
-		value := getFunc.Call([]reflect.Value{reflect.ValueOf(i)})[0]
-		result = append(result, value.Interface())
-	}
-	return result
-}
-
-func (it *Functions) setFunc(key string, val interface{}) interface{} {
-	it.store[key] = val
-	return ""
-}
-
-func (it *Functions) getFunc(key string) interface{} {
-	result := it.store[key]
-	return result
-}
-
-func (it *Functions) findFileByPathFunc(path string) protoreflect.FileDescriptor {
-	result, _ := it.data.Registry().FindFileByPath(path)
-	return result
-}
-
-func (it *Functions) findDescriptorByNameFunc(name string) protoreflect.Descriptor {
-	result, _ := it.data.Registry().FindDescriptorByName(protoreflect.FullName(name))
-	return result
-}
-
-func (it *Functions) findServiceByNameFunc(name string) protoreflect.ServiceDescriptor {
-	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.ServiceDescriptor); ok {
-		return result
-	} else {
-		return nil
-	}
-}
-
-func (it *Functions) findMessageByNameFunc(name string) protoreflect.MessageDescriptor {
-	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.MessageDescriptor); ok {
-		return result
-	} else {
-		return nil
-	}
-}
-
-func (it *Functions) findEnumByNameFunc(name string) protoreflect.EnumDescriptor {
-	if result, ok := it.findDescriptorByNameFunc(name).(protoreflect.EnumDescriptor); ok {
-		return result
-	} else {
-		return nil
-	}
-}
-
-func (it *Functions) leadingCommentsFunc(desc protoreflect.Descriptor) string {
-	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
-	return srcLoc.LeadingComments
-}
-
-func (it *Functions) leadingDetachedCommentsFunc(desc protoreflect.Descriptor) []string {
-	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
-	return srcLoc.LeadingDetachedComments
-}
-
-func (it *Functions) trailingCommentsFunc(desc protoreflect.Descriptor) string {
-	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
-	return srcLoc.TrailingComments
 }
