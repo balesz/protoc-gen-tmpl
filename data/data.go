@@ -74,7 +74,7 @@ func (it *Data) TemplateFiles() map[string]string {
 			return nil
 		}
 		if out := it.config.OutputByName(path); out == "" {
-			it.templateFiles[path] = strings.Join(strings.Split(path, "/")[1:], "/")
+			it.templateFiles[path] = filepath.Join(strings.Split(path, string(filepath.Separator))[1:]...)
 		} else {
 			it.templateFiles[path] = out
 		}
