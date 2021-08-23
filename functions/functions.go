@@ -51,6 +51,8 @@ func (it *Functions) Map() template.FuncMap {
 		"LeadingComments":         it.leadingCommentsFunc,
 		"LeadingDetachedComments": it.leadingDetachedCommentsFunc,
 		"TrailingComments":        it.trailingCommentsFunc,
+
+		"Options": it.optionsFunc,
 	}
 	for k, v := range sprig.TxtFuncMap() {
 		it.funcMap[k] = v
