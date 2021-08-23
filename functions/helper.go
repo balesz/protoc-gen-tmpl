@@ -17,12 +17,16 @@ func (it *Functions) failFunc(message string) (string, error) {
 	return "", errors.New(message)
 }
 
-func (it *Functions) toListFunc(list interface{}) []interface{} {
+func (it *Functions) toListFunc(list interface{}) interface{} {
 	var result []interface{}
+	listValue := reflect.ValueOf(list)
+	if listValue.IsZero() {
+		return list
+	}
 	lenFunc := reflect.ValueOf(list).MethodByName("Len")
 	getFunc := reflect.ValueOf(list).MethodByName("Get")
 	if lenFunc.IsZero() || getFunc.IsZero() {
-		return result
+		return list
 	}
 	length := lenFunc.Call([]reflect.Value{})[0]
 	for i := 0; i < int(length.Int()); i++ {
