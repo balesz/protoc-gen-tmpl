@@ -153,10 +153,12 @@ func (gen *generator) execute(files map[string]string, data map[string]interface
 			return nil, err
 		} else if err := tmpl.Execute(buf, data); err != nil {
 			if message, ok := gen.functions.LookupExit(err); ok {
-				log.Printf("[%v] %v", templateFile, message)
+				if message != "" {
+					log.Printf("[%v] Exit: %v", templateFile, message)
+				}
 				continue
 			} else if message, ok := gen.functions.LookupFail(err); ok {
-				return nil, fmt.Errorf("[%v] %v", templateFile, message)
+				return nil, fmt.Errorf("[%v] Fail: %v", templateFile, message)
 			}
 			return nil, err
 		} else if buf.Len() == 0 {

@@ -2,6 +2,7 @@ package functions
 
 import (
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
@@ -61,19 +62,19 @@ func (it *Functions) Map() template.FuncMap {
 }
 
 func (it *Functions) LookupExit(err error) (string, bool) {
-	rxExit := regexp.MustCompile(".* error calling (Exit: .*)")
+	rxExit := regexp.MustCompile(".* error calling Exit:(.*)")
 	if rxExit.MatchString(err.Error()) {
 		matches := rxExit.FindStringSubmatch(err.Error())
-		return matches[1], true
+		return strings.TrimSpace(matches[1]), true
 	}
 	return "", false
 }
 
 func (it *Functions) LookupFail(err error) (string, bool) {
-	rxFail := regexp.MustCompile(".* error calling (Fail: .*)")
+	rxFail := regexp.MustCompile(".* error calling Fail:(.*)")
 	if rxFail.MatchString(err.Error()) {
 		matches := rxFail.FindStringSubmatch(err.Error())
-		return matches[1], true
+		return strings.TrimSpace(matches[1]), true
 	}
 	return "", false
 }
