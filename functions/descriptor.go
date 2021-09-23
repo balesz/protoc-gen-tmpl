@@ -1,6 +1,8 @@
 package functions
 
 import (
+	"strings"
+
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -51,7 +53,7 @@ func (it *Functions) leadingDetachedCommentsFunc(desc protoreflect.Descriptor) [
 
 func (it *Functions) trailingCommentsFunc(desc protoreflect.Descriptor) string {
 	srcLoc := desc.ParentFile().SourceLocations().ByDescriptor(desc)
-	return srcLoc.TrailingComments
+	return strings.TrimSpace(srcLoc.TrailingComments)
 }
 
 func (it *Functions) optionsFunc(desc protoreflect.Descriptor) interface{} {
