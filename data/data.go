@@ -1,9 +1,11 @@
 package data
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"google.golang.org/protobuf/reflect/protodesc"
@@ -45,6 +47,13 @@ func (it *Data) Files() []protoreflect.FileDescriptor {
 	it.registry.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
 		it.protoFiles = append(it.protoFiles, fd)
 		return true
+	})
+	sort.SliceStable(it.protoFiles, func(i, j int) bool {
+		name1 := fmt.Sprintf("%v", it.protoFiles[i].Path())
+		name2 := fmt.Sprintf("%v", it.protoFiles[j].Path())
+		ord := []string{name1, name2}
+		sort.Strings(ord)
+		return ord[0] == name1
 	})
 	return it.protoFiles
 }
