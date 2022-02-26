@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/balesz/protoc-gen-tmpl/data"
+	"github.com/balesz/protoc-gen-tmpl/internal/data"
 	"github.com/iancoleman/strcase"
 )
 

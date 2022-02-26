@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/balesz/protoc-gen-tmpl/data"
-	"github.com/balesz/protoc-gen-tmpl/functions"
+	"github.com/balesz/protoc-gen-tmpl/internal/data"
+	"github.com/balesz/protoc-gen-tmpl/internal/functions"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/pluginpb"
