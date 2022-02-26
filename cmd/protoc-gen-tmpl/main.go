@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/balesz/protoc-gen-tmpl/generator"
+	"github.com/balesz/protoc-gen-tmpl/internal/generator"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
