@@ -2,6 +2,20 @@
 
 Based on the interfaces of the protoreflect package: <https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect>
 
+## Config
+
+### Dart Example
+
+```yaml
+exclude:
+  - lib/logic/logic_old.dart.tmpl
+output:
+  - name: lib/model/model.dart.tmpl
+    path: "lib/model/{{.Message.Name|ToSnake}}.dart"
+  - name: lib/logic/logic.dart.tmpl
+    path: "lib/logic/{{.Service.Name|ToSnake}}.dart"
+```
+
 ## Functions
 
 ### Nil
