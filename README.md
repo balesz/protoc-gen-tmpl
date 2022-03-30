@@ -2,6 +2,8 @@
 
 Based on the interfaces of the protoreflect package: <https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect>
 
+## Options
+
 ## Config
 
 The config name should be `protoc-gen-tmpl.yaml`.
