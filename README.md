@@ -4,16 +4,39 @@ Based on the interfaces of the protoreflect package: <https://pkg.go.dev/google.
 
 ## Config
 
+The config name should be `protoc-gen-tmpl.yaml`.
+
 ### Dart Example
 
 ```yaml
 exclude:
   - lib/logic/logic_old.dart.tmpl
 output:
-  - name: lib/model/model.dart.tmpl
+  - name: model.dart.tmpl
     path: "lib/model/{{.Message.Name|ToSnake}}.dart"
-  - name: lib/logic/logic.dart.tmpl
-    path: "lib/logic/{{.Service.Name|ToSnake}}.dart"
+  - name: service.dart.tmpl
+    path: "lib/service/{{.Service.Name|ToSnake}}.dart"
+types:
+  - enum: "{{.Name|ToCamel}}"
+  - message: "{{.Name|ToCamel}}"
+  - map: "Map<{{TKey}}, {{TValue}}>"
+  - repeated: "List<{{T}}>"
+  - scalar:
+    double: "double"
+    float: "double"
+    int32: "int"
+    int64: "int"
+    uint32: "int"
+    uint64: "int"
+    sint32: "int"
+    sint64: "int"
+    fixed32: "int"
+    fixed64: "int"
+    sfixed32: "int"
+    sfixed64: "int"
+    bool: "bool"
+    string: "String"
+    bytes: "Uint8List"
 ```
 
 ## Functions
