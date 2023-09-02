@@ -32,6 +32,10 @@ type Data struct {
 	templateFiles map[string]string
 }
 
+func (it *Data) Config() *Config {
+	return it.config
+}
+
 func (it *Data) Request() *pluginpb.CodeGeneratorRequest {
 	return it.request
 }

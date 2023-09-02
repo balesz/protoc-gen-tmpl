@@ -20,6 +20,7 @@ func InitConfig(path string) (*Config, error) {
 }
 
 type Config struct {
+	Types   map[string]string
 	Exclude []string
 	Output  []struct {
 		Name string
@@ -43,4 +44,12 @@ func (cfg *Config) OutputByName(name string) string {
 		}
 	}
 	return ""
+}
+
+func (cfg *Config) TypeFormat(name string) string {
+	if val, ok := cfg.Types[name]; ok {
+		return val
+	} else {
+		return "unknown"
+	}
 }

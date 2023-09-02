@@ -41,7 +41,7 @@ tasks:
       protoc -I=. \
       --plugin={{.BIN_NAME}}=bin/{{.BIN_NAME}} \
       --tmpl_out={{.OUTPUT_DIR}}/generated \
-      --tmpl_opt=test \
+      --tmpl_opt=.\
       {{.GOOGLE_PROTO_FILES}} \
       {{.PROTO_FILES}}
 
