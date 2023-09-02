@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
@@ -186,7 +186,7 @@ func (gen *generator) execute(files map[string]string, data map[string]interface
 
 func readFile(path string) (string, error) {
 	var content string
-	if input, err := ioutil.ReadFile(path); err != nil {
+	if input, err := os.ReadFile(path); err != nil {
 		return "", err
 	} else if len(input) == 0 {
 		return "", errors.New("file is empty")

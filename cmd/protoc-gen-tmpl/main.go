@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -13,7 +13,7 @@ import (
 
 func main() {
 	var req pluginpb.CodeGeneratorRequest
-	if in, err := ioutil.ReadAll(os.Stdin); err != nil {
+	if in, err := io.ReadAll(os.Stdin); err != nil {
 		log.Fatal(err)
 	} else if err := proto.Unmarshal(in, &req); err != nil {
 		log.Fatal(err)
