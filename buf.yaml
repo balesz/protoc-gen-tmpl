@@ -1,0 +1,16 @@
+version: v1
+
+lint:
+  use:
+    - DEFAULT
+
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+
+  ignore:
+    - bin
+    - cmd
+    - examples
+    - internal
+    - out
+    - test
