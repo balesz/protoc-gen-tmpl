@@ -1,0 +1,52 @@
+version: 3
+
+vars:
+  BIN_NAME: protoc-gen-tmpl
+  OUTPUT_DIR: out
+  GOOGLE_PROTO_FILES: google/protobuf/any.proto google/protobuf/empty.proto google/protobuf/timestamp.proto
+  PROTO_FILES:
+    sh: ls -m protos/*.proto | tr ', ' ' '
+
+tasks:
+  test:task:
+    cmd: echo {{.PROTO_FILES}}
+
+  clean:all:
+    cmds:
+      - task: clean:app
+      - task: clean:out
+
+  clean:app:
+    cmd: rm -rf bin
+
+  clean:out:
+    cmds:
+      - rm -rf {{.OUTPUT_DIR}}
+      - mkdir {{.OUTPUT_DIR}}
+
+  build:app:
+    deps: [clean:app]
+    cmd: go build -o bin/{{.BIN_NAME}} ./cmd/{{.BIN_NAME}}
+
+  build:descriptor:
+    deps: [clean:out]
+    cmd: |
+      protoc -I=. -o{{.OUTPUT_DIR}}/descriptor.out \
+      {{.GOOGLE_PROTO_FILES}} \
+      {{.PROTO_FILES}}
+
+  generate:
+    deps: [build:app, clean:out]
+    cmd: |
+      protoc -I=. \
+      --plugin={{.BIN_NAME}}=bin/{{.BIN_NAME}} \
+      --tmpl_out={{.OUTPUT_DIR}}/generated \
+      --tmpl_opt=test \
+      {{.GOOGLE_PROTO_FILES}} \
+      {{.PROTO_FILES}}
+
+  lint:
+    cmd: buf lint
+
+  format:
+    cmd: buf format -w
