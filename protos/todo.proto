@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package todo.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message GetTodosRequest {
+  optional OrderBy order = 1;
+  optional string query = 2;
+}
+
+message SetTodoRequest {
+  optional int32 todo_id = 1;
+  optional string message = 2;
+  optional bool is_done = 3;
+}
+
+message GetTodosResponse {
+  repeated Todo todos = 1;
+}
+
+message SetTodoResponse {}
+
+service TodoService {
+  rpc GetTodos(GetTodosRequest) returns (GetTodosResponse) {}
+  rpc SetTodo(SetTodoRequest) returns (SetTodoResponse) {}
+}
+
+enum OrderBy {
+  ORDER_BY_UNSPECIFIED = 0;
+  ORDER_BY_CREATED = 1;
+  ORDER_BY_MESSAGE = 2;
+}
+
+message Todo {
+  int32 id = 1;
+  google.protobuf.Timestamp created = 2;
+  string message = 3;
+  bool is_done = 4;
+}
