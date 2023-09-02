@@ -43,6 +43,7 @@ func (it *Functions) Map() template.FuncMap {
 		"ToSnake":              strcase.ToSnake,
 		"ToSnakeWithIgnore":    strcase.ToSnakeWithIgnore,
 
+		"MapType":              it.mapType,
 		"FindFileByPath":       it.findFileByPathFunc,
 		"FindDescriptorByName": it.findDescriptorByNameFunc,
 		"FindServiceByName":    it.findServiceByNameFunc,

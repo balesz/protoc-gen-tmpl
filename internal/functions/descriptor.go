@@ -1,11 +1,73 @@
 package functions
 
 import (
+	"bytes"
 	"strings"
+	"text/template"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
+
+func (it *Functions) mapType(desc protoreflect.FieldDescriptor) string {
+	data := struct {
+		protoreflect.FieldDescriptor
+		Type, TypeKey, TypeValue string
+	}{desc, "unknown", "unknown", "unknown"}
+
+	switch {
+	case desc.IsMap():
+		data.TypeKey = it.mapType(desc.MapKey())
+		data.TypeValue = it.mapType(desc.MapValue())
+		buf := new(bytes.Buffer)
+		format := it.data.Config().TypeFormat("map")
+		if temp, err := template.New("").Parse(format); err != nil {
+			return "unknown"
+		} else if err := temp.Execute(buf, data); err != nil {
+			return "unknown"
+		}
+		data.Type = buf.String()
+	case desc.IsList():
+		buf := new(bytes.Buffer)
+		format := it.data.Config().TypeFormat(desc.Kind().String())
+		if temp, err := template.New("").Parse(format); err != nil {
+			return "unknown"
+		} else if err := temp.Execute(buf, data); err != nil {
+			return "unknown"
+		}
+		data.Type = buf.String()
+		buf = new(bytes.Buffer)
+		format = it.data.Config().TypeFormat("list")
+		if temp, err := template.New("").Parse(format); err != nil {
+			return "unknown"
+		} else if err := temp.Execute(buf, data); err != nil {
+			return "unknown"
+		}
+		data.Type = buf.String()
+	default:
+		buf := new(bytes.Buffer)
+		format := it.data.Config().TypeFormat(desc.Kind().String())
+		if temp, err := template.New("").Parse(format); err != nil {
+			return "unknown"
+		} else if err := temp.Execute(buf, data); err != nil {
+			return "unknown"
+		}
+		data.Type = buf.String()
+	}
+
+	if desc.HasOptionalKeyword() {
+		buf := new(bytes.Buffer)
+		format := it.data.Config().TypeFormat("optional")
+		if temp, err := template.New("").Parse(format); err != nil {
+			return "unknown"
+		} else if err := temp.Execute(buf, data); err != nil {
+			return "unknown"
+		}
+		data.Type = buf.String()
+	}
+
+	return data.Type
+}
 
 func (it *Functions) findFileByPathFunc(path string) protoreflect.FileDescriptor {
 	result, _ := it.data.Registry().FindFileByPath(path)
